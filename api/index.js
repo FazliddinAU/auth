@@ -24,7 +24,7 @@ mongoose
 
 const app = express();
 
-const allowedOrigins = ['http://localhost:5173', 'https://mern-auth-silk.vercel.app'];
+const allowedOrigins = ['http://localhost:5173', 'https://auth-lac-seven.vercel.app', 'https://auth-i9ub906h7-fazliddinaus-projects.vercel.app'];
 
 app.use(
   cors({
