@@ -24,12 +24,28 @@ mongoose
 
 const app = express();
 
+const allowedOrigins = ['http://localhost:5173', 'https://mern-auth-silk.vercel.app'];
+
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'https://mern-auth-silk.vercel.app'],
+    origin: function(origin, callback) {
+      // Allow requests with no origin like mobile apps, Postman, curl
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
+
+// Handle preflight requests for all routes
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -38,16 +54,17 @@ app.use(cookieParser());
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 
-// Static files
+// Serve static files from client dist
 app.use(express.static(path.join(__dirname, '/client/dist')));
 
-// SPA fallback
+// SPA fallback — send index.html for any other route (client side routing)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
 });
 
-// Error handler
+// Error handler middleware
 app.use((err, req, res, next) => {
+  console.error('Server error:', err); // Log error for debugging
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
   return res.status(statusCode).json({
