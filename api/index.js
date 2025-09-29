@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// ✅ MongoDB ulanishi
+// MongoDB ulanishi
 mongoose
   .connect(process.env.MONGO)
   .then(() => {
@@ -25,47 +25,32 @@ mongoose
     console.error('❌ MongoDB ulanishida xatolik:', err);
   });
 
-// ✅ Ruxsat berilgan frontend manzillar
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://auth-lac-seven.vercel.app',
-  'https://auth-i9ub906h7-fazliddinaus-projects.vercel.app',
-];
+// CORS konfiguratsiyasi — **barcha domenlarga ruxsat**
+app.use(cors({
+  origin: '*',           // **Hamma domenlarga ruxsat**
+  credentials: false,    // credentials true bo'lsa origin '*' bilan ishlamaydi
+}));
 
-// ✅ CORS config
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`⛔ Origin ruxsat etilmagan: ${origin}`), false);
-    }
-  },
-  credentials: true,
-};
+// Preflight so‘rovlar uchun ham ruxsat
+app.options('*', cors());
 
-app.use(cors(corsOptions));
-
-// ✅ Preflight so‘rovlar uchun
-app.options('*', cors(corsOptions));
-
-// ✅ Middlewares
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ API routes
+// API yo‘llari
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 
-// ✅ Client build fayllarini server qilish (agar kerak bo‘lsa)
+// Client build fayllarini server qilish (agar kerak bo‘lsa)
 app.use(express.static(path.join(__dirname, 'client', 'dist')));
 
-// ✅ SPA fallback (client-side routing uchun)
+// SPA fallback (client-side routing uchun)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
 });
 
-// ✅ Global xatolik handler
+// Global xatolik handler
 app.use((err, req, res, next) => {
   console.error('❌ Server xatosi:', err.message);
   res.status(err.statusCode || 500).json({
@@ -74,7 +59,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ✅ Serverni ishga tushurish
+// Serverni ishga tushurish
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server http://localhost:${PORT} da ishga tushdi`);
