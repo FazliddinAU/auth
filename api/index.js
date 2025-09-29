@@ -1,4 +1,3 @@
-// Imports
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
@@ -7,11 +6,13 @@ import authRoutes from './routes/auth.route.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Load env variables
 dotenv.config();
 
-// Connect to MongoDB
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 mongoose
   .connect(process.env.MONGO)
   .then(() => {
@@ -21,35 +22,31 @@ mongoose
     console.error('❌ MongoDB connection error:', err);
   });
 
-// Init Express
 const app = express();
-const __dirname = path.resolve();
 
-// ✅ CORS Middleware
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'https://mern-auth-silk.vercel.app'], // frontend URL-laringiz
+    origin: ['http://localhost:5173', 'https://mern-auth-silk.vercel.app'],
     credentials: true,
   })
 );
 
-// Middleware
-app.use(express.json()); // JSON parse qilish
-app.use(cookieParser()); // Cookie parse qilish
+app.use(express.json());
+app.use(cookieParser());
 
-// Routes
+// API routes first
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 
-// Static build folder (Vite uchun build qilingan frontend)
+// Static files
 app.use(express.static(path.join(__dirname, '/client/dist')));
 
-// Fallback route - frontend routingni qo‘llab-quvvatlash
+// SPA fallback
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
 });
 
-// Global Error Handler
+// Error handler
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
@@ -59,7 +56,6 @@ app.use((err, req, res, next) => {
     statusCode,
   });
 });
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
